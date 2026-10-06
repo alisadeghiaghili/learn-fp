@@ -6,7 +6,7 @@ import { checkCommand } from './typecheck';
 import { reprOf, typeOf, effectfulOf } from './value';
 import { teachAfterCommand } from './teach';
 import { findConcept, formatConcepts } from './glossary';
-import { codeFor } from '../languages';
+import { codeFor, LANGS, type Lang } from '../languages';
 
 export interface CommandContext {
   state: ProgramState;
@@ -29,6 +29,20 @@ function fail(error: string): CommandResult {
 
 function envOf(state: ProgramState) {
   return { values: state.env.values, fns: state.env.fns, adts: state.env.adts };
+}
+
+/** Map a user language token to a track, or null for the default (all tracks). */
+function parseLang(arg: string | undefined): Lang | null {
+  if (!arg) return null;
+  const a = arg.toLowerCase();
+  const aliases: Record<string, Lang> = {
+    r: 'r',
+    py: 'py', python: 'py',
+    hs: 'hs', haskell: 'hs',
+    clj: 'clj', clojure: 'clj',
+    ex: 'ex', elixir: 'ex',
+  };
+  return aliases[a] ?? null;
 }
 
 /** Evaluate an expression against the current state; returns the value. */
@@ -262,14 +276,13 @@ export function executeCommand(prev: ProgramState, rawInput: string): { state: P
     return { state, result: ok(showLines(state, name)) };
   }
 
-  // ── show code <topic> [r|py] ────────────────────────────────────────────
+  // ── show code <topic> [lang] ────────────────────────────────────────────
   if (raw.startsWith('show code') || raw.startsWith('code ')) {
     const rest = raw.replace(/^show code|^code/, '').trim();
     const parts = rest.split(/\s+/).filter(Boolean);
     const topic = parts[0];
-    const langArg = parts[1];
-    const lang: 'r' | 'py' | null = langArg === 'r' || langArg === 'R' ? 'r' : langArg === 'py' || langArg === 'python' || langArg === 'Python' ? 'py' : null;
-    if (!topic) return { state, result: fail('Usage: show code <topic> [r|py] — try `show code pure` or `show code map`.') };
+    const lang = parseLang(parts[1]);
+    if (!topic) return { state, result: fail(`Usage: show code <topic> [${LANGS.join('|')}] — try \`show code pure\` or \`show code map hs\`.`) };
     const ex = codeFor(topic, lang);
     if (!ex) return { state, result: fail(`No code example for '${topic}'.`) };
     return { state, result: ok(ex) };
@@ -298,9 +311,9 @@ export function executeCommand(prev: ProgramState, rawInput: string): { state: P
           '  run <expr>              evaluate → result   e.g.  run double 5',
           '  match <scr> {pat => …}',
           'Inspect:  show all · show <n> · show functions · show result · show effects',
-          'Language: show code <topic> [r|py]',
+          'Language: show code <topic> [r|py|hs|clj|ex]  (e.g. `show code fold hs`)',
           'Learn:  concepts · show code',
-          'Meta:   levels · hint · steps · show goal · show solution · reset · undo · sandbox · clear',
+          'Meta:   levels · import · hint · steps · show goal · show solution · reset · undo · sandbox · clear',
         ].join('\n'),
       ),
     };

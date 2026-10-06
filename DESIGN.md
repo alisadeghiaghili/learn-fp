@@ -86,8 +86,13 @@ any paragraph.
 3. **Terminal commands** — a language-agnostic FP DSL (`let`, `pure`, `pipe`, `map`, `filter`,
    `fold`, `match`, `either`, `maybe`, `io`, `lazy`, …) plus meta: `levels`, `hint`, `show goal`,
    `show solution`, `reset`, `undo`, `sandbox`, `help`.
-4. **Language tracks** — R and Python example snippets per concept (`show code r`, `show code py`).
+4. **Language tracks** — R, Python, Haskell, Clojure, and Elixir example snippets per concept
+   (`show code <topic>` shows all; `show code <topic> hs` pins one).
 5. **Persistence** — solved levels + best command counts in `localStorage`.
+6. **Type checker** — a small DSL checker that flags wrong types before you run
+   (undefined names, applying a non-function, an operator on the wrong type).
+7. **Level import** — add custom levels from a JSON file (`import` command); they persist
+   and appear in the level picker.
 
 ## Level packs (v1)
 
@@ -123,7 +128,7 @@ pipeline composes, a monad wraps a value, an effect was handled) — not raw obj
 
 ## Future (out of v1)
 
-- Level builder / import JSON
-- More language tracks (Haskell, F#, Clojure, Elixir, JS)
-- Localized UI (Persian/English already supported)
-- A real (small) type checker
+- A visual level builder (import from JSON is done; editing in the UI is not).
+- More language tracks (F#, OCaml, JS/TS); the import format could carry per-language snippets.
+- Localized UI (English only today; the `i18n` bundle is shaped for a second locale).
+- A full Hindley–Milner type inferencer (the current checker is concrete-domain, not a general inferer).

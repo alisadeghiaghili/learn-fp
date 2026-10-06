@@ -253,8 +253,8 @@ const en: UiCopy = {
   sandboxTipItems: [
     'Everything you type is evaluated against the board on the left',
     '`show all` lists values; `show functions` lists functions',
-    '`show code <topic>` shows the idea in R and Python',
-    '`concepts` opens the FP mental-model glossary',
+    '`show code <topic>` shows the idea in R, Python, Haskell, Clojure, and Elixir',
+    '`show code <topic> hs` pins one language; `concepts` opens the glossary',
   ],
   noActiveLevel: 'No active level',
   noActiveLevelDetail: 'Open Levels to pick a challenge, or experiment in the sandbox.',

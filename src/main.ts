@@ -16,7 +16,7 @@ showModal({
     [
       `**LearnFP** turns the *concepts* of functional programming into a hands-on sandbox: a terminal you type into, and a **material board** where values flow through pure functions into a typed result.`,
       '',
-      `The core course is **language-agnostic** — it teaches the ideas (purity, composition, pattern matching, higher-order functions, monads, laziness). Concrete **R** and **Python** snippets appear in lessons and via \`show code\`.`,
+      `The core course is **language-agnostic** — it teaches the ideas (purity, composition, pattern matching, higher-order functions, monads, laziness). Concrete **R, Python, Haskell, Clojure, and Elixir** snippets appear in lessons and via \`show code\`.`,
       '',
       '**How it works**',
       '- `let`, `def`, `type`, `compose` — build values, functions, and types',

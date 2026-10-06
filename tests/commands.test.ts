@@ -20,6 +20,33 @@ test('show code with a language filter', () => {
   expect(out).not.toContain('```r'); // python only
 });
 
+test('show code defaults to all supported tracks', () => {
+  const out = run('show code fold');
+  expect(out).toContain('```r');
+  expect(out).toContain('```python');
+  expect(out).toContain('```haskell');
+  expect(out).toContain('```clojure');
+  expect(out).toContain('```elixir');
+});
+
+test('show code pins one new language (haskell)', () => {
+  const out = run('show code map hs');
+  expect(out).toContain('```haskell');
+  expect(out).toContain('map double [1,2,3]');
+  expect(out).not.toContain('```python');
+});
+
+test('show code pins clojure and elixir', () => {
+  expect(run('show code pure clj')).toContain('```clojure');
+  expect(run('show code laziness ex')).toContain('```elixir');
+});
+
+test('show code accepts full language names', () => {
+  expect(run('show code composition haskell')).toContain('```haskell');
+  expect(run('show code composition elixir')).toContain('```elixir');
+  expect(run('show code composition python')).toContain('```python');
+});
+
 test('show code with unknown topic errors cleanly', () => {
   expect(run('show code nonsense')).toMatch(/No code example/);
 });
