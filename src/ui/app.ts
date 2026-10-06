@@ -2,8 +2,10 @@ import type { LevelDef, ProgramState } from '../engine/types';
 import { cloneState, sandboxState } from '../engine/state';
 import { commandCountsForGolf, executeCommand } from '../engine/commands';
 import { solutionComplete, solutionProgress, nextSteps } from '../engine/solution';
+import { evaluateGoal } from '../engine/compare';
 import { coachLine } from '../engine/coach';
-import { levelById, levelAfter, SERIES_ORDER, SERIES_TITLES, levelsInSeries } from '../levels';
+import { levelById, levelAfter, seriesOrder, seriesTitle, levelsInSeries, addCustomLevel } from '../levels';
+import { parseLevelJson } from '../levels/import';
 import { renderBoardHtml } from './board';
 import { TerminalView, type LogLine } from './terminal';
 import { renderMarkdown, showModal, escapeHtml as esc2 } from './dialog';
@@ -200,11 +202,12 @@ export class App {
 
   private openLevels(): void {
     const u = ui();
-    const body = SERIES_ORDER.map((s) => {
-      const rows = levelsInSeries(s)
-        .map((l) => {
-          const p = this.progress[l.id];
-          return `<button type="button" class="level-row ${p?.solved ? 'solved' : ''}" data-level="${l.id}">
+    const body = seriesOrder()
+      .map((s) => {
+        const rows = levelsInSeries(s)
+          .map((l) => {
+            const p = this.progress[l.id];
+            return `<button type="button" class="level-row ${p?.solved ? 'solved' : ''}" data-level="${l.id}">
             <span class="id">${l.id}</span>
             <span class="name">${esc2(l.name)}</span>
             <span class="par-note">par ${l.par}</span>
@@ -212,10 +215,11 @@ export class App {
               ${p?.solved ? `${esc2(u.solved)} ${p.bestCommands ?? ''}` : `<span class="diff-dots" aria-label="${esc2(u.difficultyOf(l.difficulty))}">${renderDiffDots(l.difficulty)}</span>`}
             </span>
           </button>`;
-        })
-        .join('');
-      return `<div class="series-block"><h3>${esc2(SERIES_TITLES[s])}</h3><div class="level-list">${rows}</div></div>`;
-    }).join('');
+          })
+          .join('');
+        return `<div class="series-block"><h3>${esc2(seriesTitle(s))}</h3><div class="level-list">${rows}</div></div>`;
+      })
+      .join('');
 
     const modal = showModal({
       title: u.levelPicker,
@@ -318,6 +322,32 @@ export class App {
     this.terminal.focus();
   }
 
+  private importLevel(): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      void file.text().then((text) => {
+        const res = parseLevelJson(text);
+        if (res.error || !res.spec) {
+          this.pushErr(`Import failed: ${res.error ?? 'no level produced'}`);
+          return;
+        }
+        const { spec } = res;
+        if (levelById(spec.id)) {
+          this.pushErr(`A level named '${spec.id}' already exists.`);
+          return;
+        }
+        addCustomLevel(spec);
+        this.pushMeta(`Imported level ${spec.id} (${spec.name}). Pick it from Levels.`);
+        this.renderAll();
+      });
+    };
+    input.click();
+  }
+
   private resetLevel(): void {
     this.state = cloneState(this.startSnapshot);
     this.golf = [];
@@ -402,6 +432,7 @@ export class App {
       this.terminal.clear();
       return;
     }
+    if (lower === 'import' || lower === 'import level' || lower === 'import levels') return void this.importLevel();
 
     this.runCommand(cmd, { fromSolution: false });
   }
@@ -435,7 +466,10 @@ export class App {
 
   private afterStateChange(): void {
     if (this.level) {
-      const solved = solutionComplete(this.state, this.level.solution);
+      // A level is solved when its *goal* is met — not when the solution
+      // commands have been typed. Gating on the goal means a wrong answer
+      // (right-shaped command, wrong value) is not celebrated as solved.
+      const solved = evaluateGoal(this.state, this.level.goal).solved;
       if (solved && !this.solvedFlash) {
         this.solvedFlash = true;
         const num = this.golf.length;

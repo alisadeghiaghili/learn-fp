@@ -1,6 +1,6 @@
 import './style.css';
 import { App } from './ui/app';
-import { TOTAL_LEVELS } from './levels';
+import { totalLevels, seriesOrder } from './levels';
 import { showModal, renderMarkdown } from './ui/dialog';
 import { ui } from './i18n';
 
@@ -22,7 +22,7 @@ showModal({
       '- `let`, `def`, `type`, `compose` — build values, functions, and types',
       '- `run` — evaluate an expression; watch it land in the Result slot',
       '- `map`, `filter`, `fold`, `match`, `bind`, `take` — the FP toolbox',
-      `- Each level has a goal; the guide (right) tracks your progress. ${TOTAL_LEVELS} levels across 6 series.`,
+      `- Each level has a goal; the guide (right) tracks your progress. ${totalLevels()} levels across ${seriesOrder().length} series.`,
       '',
       'No installs, no sign-up — progress is saved in this browser.',
     ].join('\n'),

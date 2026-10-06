@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { LEVELS, TOTAL_LEVELS, levelById } from '../src/levels';
+import { LEVELS, totalLevels, levelById } from '../src/levels';
 import { executeCommand } from '../src/engine/commands';
 import { evaluateGoal } from '../src/engine/compare';
 import type { ProgramState } from '../src/engine/types';
@@ -19,8 +19,8 @@ function replay(levelId: string): { solved: boolean; steps: { cmd: string; err?:
 }
 
 test('curriculum has a healthy number of levels', () => {
-  expect(TOTAL_LEVELS).toBeGreaterThanOrEqual(18);
-  expect(new Set(LEVELS.map((l) => l.id)).size).toBe(TOTAL_LEVELS); // unique ids
+  expect(totalLevels()).toBeGreaterThanOrEqual(18);
+  expect(new Set(LEVELS.map((l) => l.id)).size).toBe(totalLevels()); // unique ids
 });
 
 test.each(LEVELS.map((l) => [l.id, l.series]))('%s solves its goal (%s)', (id) => {

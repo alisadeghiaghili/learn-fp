@@ -48,6 +48,17 @@ export interface FpList {
   items: FpValue[];
 }
 
+/**
+ * A serializable reference to a built-in: its name, total arity (-1 = variadic),
+ * and the arguments already supplied (currying). Stored as data — not a closure —
+ * so function values survive `structuredClone` (undo/reset, level start states).
+ */
+export interface BuiltinRef {
+  name: string;
+  arity: number;
+  provided: FpValue[];
+}
+
 export interface FpFunction {
   __fn: true;
   name: string;
@@ -58,8 +69,8 @@ export interface FpFunction {
   pure: boolean;
   /** Builtin arity (-1 = variadic). Absent for user lambdas. */
   arity?: number;
-  /** Builtin dispatch hook (present only for builtins). */
-  __builtin?: (args: FpValue[], env: Env, state: ProgramState) => FpValue;
+  /** Present only for builtins; dispatches by name at apply time. */
+  __builtin?: BuiltinRef;
   /** From `compose` — apply the chain in reverse. */
   composeChain?: FpFunction[];
 }

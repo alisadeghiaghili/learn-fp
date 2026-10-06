@@ -61,3 +61,23 @@ test('ADT construction + pattern match area', () => {
   );
   expect(res(s)).toBe('12');
 });
+
+test('binding a builtin to a value and using it across commands', () => {
+  // Regression: builtin function values must survive the cloneState round-trip
+  // that happens on every command (undo/reset/level restart).
+  const s = play(
+    'def double = fn (n) -> n * 2',
+    'let xs = [1 2 3]',
+    'let f = map',
+    'run f double xs',
+  );
+  expect(res(s)).toBe('[2 4 6]');
+});
+
+test('a curried builtin bound to a value stays curried', () => {
+  const s = play(
+    'let dbl = map double',
+    'run dbl [1 2 3]',
+  );
+  expect(res(s)).toBe('[2 4 6]');
+});

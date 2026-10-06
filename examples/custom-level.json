@@ -1,0 +1,36 @@
+{
+  "id": "demo-1",
+  "series": "demo",
+  "seriesTitle": "Demo",
+  "name": "Double and sum",
+  "difficulty": 2,
+  "par": 3,
+  "hint": "def double = fn (n) -> n * 2; let doubled = map double xs; run sum doubled",
+  "objective": "Map a function over a list and sum the result.",
+  "learning": [
+    "map applies a function to every element",
+    "sum collapses a list of numbers to one"
+  ],
+  "start": {
+    "values": { "xs": 3 },
+    "fns": { "double": "fn (n) -> n * 2" }
+  },
+  "goal": {
+    "kind": "allOf",
+    "checks": [
+      { "kind": "functionDefined", "name": "double" },
+      { "kind": "resultEquals", "value": "6" }
+    ]
+  },
+  "solution": [
+    "def double = fn (n) -> n * 2",
+    "let result = double 3",
+    "run result"
+  ],
+  "startDialog": [
+    {
+      "title": "A little map",
+      "markdown": "You have a function `double` and a value. Define it, apply it, and read the result."
+    }
+  ]
+}

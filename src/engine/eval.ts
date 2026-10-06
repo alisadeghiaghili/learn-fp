@@ -235,32 +235,58 @@ const BUILTINS: Record<string, Builtin> = {
   },
 };
 
-function makeBuiltinFn(name: string, b: Builtin): FpFunction {
-  const paramCount = b.arity === -1 ? 2 : b.arity;
+/**
+ * Static metadata about a built-in, for the type checker. `value: true` marks
+ * the zero-arity value builtins (`nothing`/`none`) that evaluate to a value on
+ * a bare reference rather than a function. `arity: -1` means variadic.
+ */
+export function builtinMeta(name: string): { arity: number; pure: boolean; value: boolean } | null {
+  const b = BUILTINS[name];
+  if (!b) return null;
   return {
-    __fn: true,
-    name,
-    params: Array.from({ length: Math.max(0, paramCount) }, (_, i) => `a${i}`),
-    body: { t: 'ident', name: '\0builtin.' + name },
-    env: { values: {}, fns: {}, adts: {} },
+    arity: b.arity,
     pure: !IMPURE_BUILTINS.has(name),
-    arity: b.arity === -1 ? -1 : b.arity,
-    __builtin: b.run,
+    value: VALUE_BUILTINS.has(name) && b.arity === 0,
   };
 }
 
+function makeBuiltinFn(name: string, b: Builtin): FpFunction {
+  const total = b.arity === -1 ? -1 : b.arity;
+  const paramCount = total === -1 ? 2 : Math.max(0, total);
+  return {
+    __fn: true,
+    name,
+    params: Array.from({ length: paramCount }, (_, i) => `a${i}`),
+    body: { t: 'ident', name: '\0builtin.' + name },
+    env: { values: {}, fns: {}, adts: {} },
+    pure: !IMPURE_BUILTINS.has(name),
+    arity: total,
+    __builtin: { name, arity: total, provided: [] },
+  };
+}
+
+/** Dispatch a builtin by name with its full argument list. */
+function dispatchBuiltin(name: string, args: FpValue[], env: Env, state: ProgramState): FpValue {
+  const b = BUILTINS[name];
+  if (!b) throw new EvalError(`Unknown builtin '${name}'`);
+  return b.run(args, env, state);
+}
+
 /** Wrap a builtin so that a later argument completes the call (currying). */
-function curriedBuiltin(base: FpFunction, provided: FpValue[]): FpFunction {
-  const remaining = (base.arity as number) - provided.length;
+function curriedBuiltin(base: FpFunction, args: FpValue[]): FpFunction {
+  const total = base.arity as number;
+  const allProvided = [...(base.__builtin?.provided ?? []), ...args];
+  const remaining = total - allProvided.length;
+  const name = base.__builtin?.name ?? base.name;
   return {
     __fn: true,
     name: base.name,
-    params: Array.from({ length: remaining }, (_, i) => `a${i}`),
-    body: { t: 'ident', name: '\0builtin.' + base.name },
+    params: Array.from({ length: Math.max(0, remaining) }, (_, i) => `a${i}`),
+    body: { t: 'ident', name: '\0builtin.' + name },
     env: base.env,
     pure: base.pure,
-    arity: remaining,
-    __builtin: (rest, e, st) => base.__builtin!( [...provided, ...rest], e, st ),
+    arity: total,
+    __builtin: { name, arity: total, provided: allProvided },
   };
 }
 
@@ -271,13 +297,16 @@ export function applyFn(fn: FpFunction, args: FpValue[], env: Env, state: Progra
   }
   // Builtin dispatch (with currying for under-application).
   if (fn.__builtin) {
-    if (fn.arity !== undefined && fn.arity >= 0) {
-      if (args.length > fn.arity) {
-        throw new EvalError(`${fn.name} expects ${fn.arity} arg(s), got ${args.length}`);
-      }
-      if (args.length < fn.arity) return curriedBuiltin(fn, args);
+    const ref = fn.__builtin;
+    const total = ref.arity;
+    if (total >= 0) {
+      const all = [...ref.provided, ...args];
+      if (all.length > total) throw new EvalError(`${ref.name} expects ${total} arg(s), got ${all.length}`);
+      if (all.length < total) return curriedBuiltin(fn, args);
+      return dispatchBuiltin(ref.name, all, env, state);
     }
-    return fn.__builtin(args, env, state);
+    // Variadic builtin: no under-application.
+    return dispatchBuiltin(ref.name, args, env, state);
   }
   // Composition chain (from `compose`)
   if (fn.composeChain) {

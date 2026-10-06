@@ -2,6 +2,7 @@ import type { CommandResult, FpFunction, FpValue, ProgramState } from './types';
 import { cloneState, defineAdt, defineFn, refresh, valueOf } from './state';
 import { parseExpr } from './parser';
 import { evalExpr, isImpureExpr } from './eval';
+import { checkCommand } from './typecheck';
 import { reprOf, typeOf, effectfulOf } from './value';
 import { teachAfterCommand } from './teach';
 import { findConcept, formatConcepts } from './glossary';
@@ -35,6 +36,13 @@ function evaluate(state: ProgramState, exprSrc: string): FpValue {
   const e = parseExpr(exprSrc);
   state.pipeline = [];
   return evalExpr(e, envOf(state), state);
+}
+
+/** Type-check a command before evaluation; returns a short advisory note (or null). */
+function typeNote(state: ProgramState, cmd: string): string | null {
+  const errs = checkCommand(cmd, envOf(state));
+  if (!errs.length) return null;
+  return ['── type check ──', ...errs.slice(0, 3).map((e) => `  ${e.message}`)].join('\n');
 }
 
 function parseDef(src: string): { name: string; expr: string } | null {
@@ -143,7 +151,8 @@ export function executeCommand(prev: ProgramState, rawInput: string): { state: P
       const v = evaluate(state, letM.expr);
       state.env.values[letM.name] = v;
       if (!state.valueOrder.includes(letM.name)) state.valueOrder.push(letM.name);
-      return finish(state, ok(`${letM.name} = ${reprOf(v)}   [${typeOf(v)}]`));
+      const note = typeNote(state, raw);
+      return finish(state, ok(`${letM.name} = ${reprOf(v)}   [${typeOf(v)}]${note ? '\n' + note : ''}`));
     } catch (err) {
       return { state, result: fail(err instanceof Error ? err.message : String(err)) };
     }
@@ -167,7 +176,8 @@ export function executeCommand(prev: ProgramState, rawInput: string): { state: P
         arity: e.params.length,
       };
       defineFn(state, defM.name, fn, `(${e.params.join(', ')}) -> …`);
-      return finish(state, ok(`defined ${defM.name} (${e.params.join(', ')}) -> …   [${pure ? 'pure' : 'IMPURE'}]`));
+      const note = typeNote(state, raw);
+      return finish(state, ok(`defined ${defM.name} (${e.params.join(', ')}) -> …   [${pure ? 'pure' : 'IMPURE'}]${note ? '\n' + note : ''}`));
     } catch (err) {
       return { state, result: fail(err instanceof Error ? err.message : String(err)) };
     }
