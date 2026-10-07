@@ -19,6 +19,8 @@ export interface UiCopy {
   undo: string;
   reset: string;
   help: string;
+  menu: string;
+  github: string;
 
   // ── Data-flow board zones ────────────────────────────────────────────────
   values: string;
@@ -160,6 +162,8 @@ const en: UiCopy = {
   undo: 'Undo',
   reset: 'Reset',
   help: 'Help',
+  menu: 'Menu',
+  github: 'GitHub repository',
 
   values: 'Values',
   functions: 'Functions',
