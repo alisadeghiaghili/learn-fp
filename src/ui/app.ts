@@ -11,6 +11,7 @@ import { TerminalView, type LogLine } from './terminal';
 import { renderMarkdown, showModal, escapeHtml as esc2 } from './dialog';
 import { loadProgress, saveProgress, summarizeCurriculum } from './progress';
 import { ui } from '../i18n';
+import { formatVisitorCount, startVisitorCounter } from './visitor-counter';
 import { launchConfetti, playFanfare } from './confetti';
 
 function renderDiffDots(difficulty: number): string {
@@ -49,6 +50,20 @@ export class App {
     } else {
       this.pushMeta(ui().sandboxSeeded);
     }
+    void startVisitorCounter((count) => this.renderVisitors(count));
+  }
+
+  /** Unique-visitor stat in the toolbar; stays hidden until a number is known. */
+  private renderVisitors(count: number): void {
+    const stat = this.root.querySelector<HTMLElement>('#visitor-stat');
+    const value = this.root.querySelector<HTMLElement>('#visitor-count');
+    if (!stat || !value) return;
+    const u = ui();
+    const text = formatVisitorCount(count, u.numberLocale);
+    value.textContent = text;
+    stat.title = u.visitors;
+    stat.setAttribute('aria-label', u.visitorsLabel(text));
+    stat.hidden = false;
   }
 
   private mount(): void {
@@ -69,6 +84,10 @@ export class App {
               <button type="button" data-action="reset" title="${esc2(u.reset)}">${esc2(u.reset)}</button>
               <button type="button" data-action="sandbox" class="ghost">${esc2(u.sandbox)}</button>
             </div>
+            <span class="tb-stat" id="visitor-stat" role="img" title="${esc2(u.visitors)}" aria-label="${esc2(u.visitors)}" hidden>
+              <svg class="visitor-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0-2.21-2.69-4-6-4s-6 1.79-6 4v1h12v-1zm-1.07 0H3.07C3.56 11.83 5.48 11 8 11s4.44.83 4.93 2z"/></svg>
+              <span class="visitor-count" id="visitor-count"></span>
+            </span>
             <a class="tb-link gh" href="https://github.com/alisadeghiaghili/learn-fp" target="_blank" rel="noopener noreferrer" title="${esc2(u.github)}" aria-label="${esc2(u.github)}"><svg class="gh-mark" viewBox="0 0 16 16" aria-hidden="true" width="18" height="18"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
           </div>
         </header>

@@ -179,6 +179,33 @@ button.ghost {
   background: var(--panel-2);
 }
 
+/* Unique-visitor stat — same chip scale as the toolbar buttons. */
+.tb-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--fp) 35%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-2) 65%, transparent);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.tb-stat .visitor-icon {
+  color: var(--fp);
+  flex-shrink: 0;
+}
+
+.tb-stat[hidden] {
+  display: none;
+}
+
 /* ── Board (the material board) ─────────────────────────────────────────── */
 .board-wrap {
   min-height: 0;

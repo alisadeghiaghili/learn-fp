@@ -21,6 +21,9 @@ export interface UiCopy {
   help: string;
   menu: string;
   github: string;
+  visitors: string;
+  visitorsLabel: (count: string) => string;
+  numberLocale: string;
 
   // ── Data-flow board zones ────────────────────────────────────────────────
   values: string;
@@ -164,6 +167,9 @@ const en: UiCopy = {
   help: 'Help',
   menu: 'Menu',
   github: 'GitHub repository',
+  visitors: 'Unique visitors',
+  visitorsLabel: (count) => `${count} unique visitors`,
+  numberLocale: 'en-US',
 
   values: 'Values',
   functions: 'Functions',
